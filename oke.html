@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Undangan Pernikahan Lista & Hasan Falevi</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body, html {
+      height: 100%;
+      font-family: 'Segoe UI', sans-serif;
+      overflow: hidden;
+    }
+
+    /* Slideshow wrapper */
+    .slideshow-container {
+      position: relative;
+      width: 100%;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .slides {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      transition: transform 1s ease, opacity 1s ease;
+    }
+
+    .slide {
+      min-height: 100vh;
+      width: 100%;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 40px;
+      color: #3a3a3a;
+      font-size: 1.2rem;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      opacity: 0;
+      transition: opacity 1s ease;
+    }
+
+    .slide.active { opacity: 1; }
+
+    /* Background floral */
+    .slide1 { background: url('bg 1.jpg'), #fff; }
+    .slide2 { background: url('bg 2.jpeg'), #fff; }
+    .slide3 { background: url('bg 3.jpeg'), #fff; }
+    .slide4 { background: url('bg 4.jpeg'), #fff; }
+    .slide5 { background: url('bg 4.jpeg'), #fff; }
+
+    .slide h1, .slide h2 {
+      margin-bottom: 20px;
+      color: #4b2e2e;
+      text-shadow: 1px 1px 3px rgba(255,255,255,0.8);
+    }
+
+    .slide p {
+      max-width: 700px;
+      line-height: 1.6;
+      background: rgba(255,255,255,0.6);
+      padding: 12px 18px;
+      border-radius: 10px;
+    }
+
+    /* Foto pasangan lingkaran floral */
+    .photo-frame {
+      width: 250px;
+      height: 250px;
+      border-radius: 50%;
+      overflow: hidden;
+      border: 8px solid #fff;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+      background: url('foto 1.jpeg') repeat center/contain;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .photo-frame img {
+      width: 200px;
+      height: 200px;
+      object-fit: cover;
+      border-radius: 50%;
+    }
+
+    /* Tombol navigasi */
+    .prev, .next {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 28px;
+      font-weight: bold;
+      color: white;
+      background: rgba(0,0,0,0.4);
+      padding: 10px;
+      border-radius: 50%;
+      cursor: pointer;
+      user-select: none;
+      transition: 0.3s;
+    }
+
+    .prev { top: 20px; }
+    .next { bottom: 20px; }
+
+    .prev:hover, .next:hover {
+      background: rgba(0,0,0,0.7);
+    }
+
+    /* Dots */
+    .dots {
+      position: absolute;
+      right: 20px;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+
+    .dot {
+      height: 14px;
+      width: 14px;
+      margin: 6px 0;
+      background-color: #bbb;
+      border-radius: 50%;
+      display: block;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    .dot.active-dot, .dot:hover {
+      background-color: #d67ba8;
+    }
+
+    button.copy-btn, .btn-map {
+      margin-top: 15px;
+      padding: 10px 18px;
+      background: #d67ba8;
+      border: none;
+      border-radius: 6px;
+      color: #fff;
+      font-weight: bold;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    button.copy-btn:hover, .btn-map:hover {
+      background: #b55a88;
+    }
+
+    /* Countdown */
+    .countdown {
+      font-size: 2rem;
+      font-weight: bold;
+      color: #d62828;
+      margin-top: 20px;
+      background: rgba(255,255,255,0.7);
+      padding: 10px 20px;
+      border-radius: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Musik -->
+  <audio autoplay loop>
+    <source src="LAGU NIKAH.mp3" type="audio/mp3">
+    Browser Anda mendukung audio.
+  </audio>
+
+  <div class="slideshow-container">
+    <div class="slides">
+
+      <!-- Slide 1 -->
+      <div class="slide slide1 active">
+        <div class="photo-frame">
+          <img src="foto 2.jpeg" alt="foto 2">
+        </div>
+        <h1>Undangan Pernikahan</h1>
+        <h2>Lesti & Hasan Falevi</h2>
+        <p>Dengan memohon rahmat dan ridho Allah SWT, kami bermaksud menyelenggarakan pernikahan kami.</p>
+      </div>
+
+      <!-- Slide 2 (Countdown) -->
+      <div class="slide slide2">
+        <h2>Waktu Menuju Acara</h2>
+        <p><b>Sabtu, 21 Oktober 2025</b><br>Pukul 10.00 WIB - selesai</p>
+        <div class="countdown" id="countdown">Loading...</div>
+      </div>
+
+      <!-- Slide 3 (Lokasi + Maps) -->
+      <div class="slide slide3">
+        <h2>Lokasi Acara</h2>
+        <p>Gedung Serbaguna Mawar<br>Jl. Melati No. 10, Jakarta</p>
+        <a class="btn-map" href="https://www.google.com/maps/place/Gedung+Serbaguna+Mawar" target="_blank">📍 Lihat di Google Maps</a>
+      </div>
+
+      <!-- Slide 4 (Ayat Ar-Rum 21) -->
+      <div class="slide slide4">
+        <h2>Surah Ar-Rum Ayat 21</h2>
+        <p>وَمِنْ ءَايَاتِهِۦٓ أَنْ خَلَقَ لَكُم مِّنْ أَنفُسِكُمْ أَزْوَٰجًا لِّتَسْكُنُوٓا۟ إِلَيْهَا وَجَعَلَ بَيْنَكُم مَّوَدَّةً وَرَحْمَةً ۚ إِنَّ فِى ذَٰلِكَ لَـَٔايَٰتٍ لِّقَوْمٍ يَتَفَكَّرُونَ</p>
+        <p><i>"Dan di antara tanda-tanda (kebesaran)-Nya ialah Dia menciptakan untukmu pasangan-pasangan dari jenismu sendiri, agar kamu merasa tenteram kepadanya, dan Dia menjadikan di antaramu rasa kasih dan sayang. Sesungguhnya pada yang demikian itu benar-benar terdapat tanda-tanda bagi kaum yang berpikir."</i></p>
+      </div>
+
+      <!-- Slide 5 (Rekening) -->
+      <div class="slide slide5">
+        <h2>Hadiah Pernikahan 💝</h2>
+        <p>BCA - <span id="norek">1234567890</span><br>a.n Alya Putri & Bima Pratama</p>
+        <button class="copy-btn" onclick="copyRekening()">Salin Nomor Rekening</button>
+      </div>
+
+    </div>
+
+    <!-- Tombol navigasi -->
+    <span class="prev" onclick="plusSlides(-1)">&#10094;</span>
+    <span class="next" onclick="plusSlides(1)">&#10095;</span>
+
+    <!-- Dots -->
+    <div class="dots">
+      <span class="dot active-dot" onclick="currentSlide(0)"></span>
+      <span class="dot" onclick="currentSlide(1)"></span>
+      <span class="dot" onclick="currentSlide(2)"></span>
+      <span class="dot" onclick="currentSlide(3)"></span>
+      <span class="dot" onclick="currentSlide(4)"></span>
+    </div>
+  </div>
+
+  <script>
+    let slideIndex = 0;
+    const slides = document.querySelectorAll(".slide");
+    const dots = document.querySelectorAll(".dot");
+    const totalSlides = dots.length;
+
+    function showSlide(n) {
+      slideIndex = (n + totalSlides) % totalSlides;
+      slides.forEach(slide => slide.classList.remove("active"));
+      slides[slideIndex].classList.add("active");
+      dots.forEach(dot => dot.classList.remove("active-dot"));
+      dots[slideIndex].classList.add("active-dot");
+      document.querySelector(".slides").style.transform = `translateY(-${slideIndex * 100}vh)`;
+    }
+
+    function plusSlides(n) {
+      showSlide(slideIndex + n);
+    }
+
+    function currentSlide(n) {
+      showSlide(n);
+    }
+
+    // Countdown
+    const countdownEl = document.getElementById("countdown");
+    const weddingDate = new Date("Oct 21, 2025 10:00:00").getTime();
+
+    setInterval(() => {
+      const now = new Date().getTime();
+      const distance = weddingDate - now;
+
+      if (distance < 0) {
+        countdownEl.innerHTML = "Acara telah dimulai!";
+        return;
+      }
+
+      const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+      countdownEl.innerHTML = `${days} Hari ${hours} Jam ${minutes} Menit ${seconds} Detik`;
+    }, 1000);
+
+    // Copy rekening
+    function copyRekening() {
+      const norek = document.getElementById("norek").innerText;
+      navigator.clipboard.writeText(norek).then(() => {
+        alert("Nomor rekening berhasil disalin: " + norek);
+      });
+    }
+  </script>
+
+</body>
+</html>
