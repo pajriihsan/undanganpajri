@@ -2,27 +2,37 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <title>Absensi Wajah (Face API JS)</title>
+  <title>Absensi Wajah (Face API JS + LocalStorage)</title>
   <script defer src="https://cdn.jsdelivr.net/npm/face-api.js"></script>
   <style>
     body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
-    video, canvas { border: 2px solid #333; border-radius: 8px; }
+    video, canvas { border: 2px solid #333; border-radius: 8px; margin: 5px; }
     #log { margin-top: 20px; text-align: left; max-width: 600px; margin-left: auto; margin-right: auto; }
     table { width: 100%; border-collapse: collapse; }
     th, td { border: 1px solid #999; padding: 5px; text-align: center; }
     button { margin: 5px; padding: 8px 12px; border: none; background: #4CAF50; color: white; border-radius: 5px; cursor: pointer; }
     button:hover { background: #45a049; }
+    input { margin: 5px; padding: 6px; }
+    #datasetList { margin-top: 10px; }
   </style>
 </head>
 <body>
   <h1>📸 Absensi Wajah</h1>
-  <p>Demo absensi berbasis wajah di browser (face-api.js)</p>
+  <p>Tambah peserta dengan upload foto wajah, dataset tersimpan otomatis di browser.</p>
 
   <video id="video" width="480" height="360" autoplay muted></video>
   <canvas id="overlay" width="480" height="360"></canvas>
   <br>
+
   <button id="ambilAbsensi">Ambil Absensi</button>
   <button id="downloadCSV">Download CSV</button>
+  <button id="resetDataset" style="background:#e53935;">Reset Dataset</button>
+
+  <h2>➕ Tambah Dataset Wajah</h2>
+  <input type="text" id="namaBaru" placeholder="Nama">
+  <input type="file" id="fotoBaru" accept="image/*">
+  <button id="tambahDataset">Tambah</button>
+  <div id="datasetList"></div>
 
   <div id="log">
     <h2>📑 Riwayat Absensi</h2>
@@ -37,37 +47,45 @@ const video = document.getElementById("video");
 const canvas = document.getElementById("overlay");
 const context = canvas.getContext("2d");
 const logBody = document.getElementById("logBody");
-const absensiData = []; // simpan ke array
+const absensiData = [];
 
-// Contoh dataset wajah (foto referensi harus online / path relatif)
-const dataset = [
-  { name: "Andi", img: "https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/examples/images/bbt1.jpg" },
-  { name: "Siti", img: "https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/examples/images/bbt2.jpg" }
-];
-
-let labeledFaceDescriptors;
+let labeledFaceDescriptors = [];
 let faceMatcher;
 
+// ========= LocalStorage helpers =========
+function saveDataset() {
+  const data = labeledFaceDescriptors.map(ld => ({
+    label: ld.label,
+    descriptors: ld.descriptors.map(d => Array.from(d))
+  }));
+  localStorage.setItem("faceDataset", JSON.stringify(data));
+}
+
+function loadDatasetFromStorage() {
+  const data = JSON.parse(localStorage.getItem("faceDataset") || "[]");
+  labeledFaceDescriptors = data.map(item =>
+    new faceapi.LabeledFaceDescriptors(
+      item.label,
+      item.descriptors.map(d => new Float32Array(d))
+    )
+  );
+  if (labeledFaceDescriptors.length > 0) {
+    faceMatcher = new faceapi.FaceMatcher(labeledFaceDescriptors, 0.6);
+    document.getElementById("datasetList").innerHTML =
+      "<b>Dataset tersimpan:</b><br>" +
+      labeledFaceDescriptors.map(ld => "✔️ " + ld.label).join("<br>");
+  }
+}
+
+// ========= Load Models =========
 async function loadModels() {
   await faceapi.nets.tinyFaceDetector.loadFromUri("https://cdn.jsdelivr.net/npm/face-api.js/weights");
   await faceapi.nets.faceLandmark68Net.loadFromUri("https://cdn.jsdelivr.net/npm/face-api.js/weights");
   await faceapi.nets.faceRecognitionNet.loadFromUri("https://cdn.jsdelivr.net/npm/face-api.js/weights");
-  console.log("Model siap.");
+  console.log("✅ Model siap");
 }
 
-async function loadDataset() {
-  const labeledDescriptors = [];
-  for (const person of dataset) {
-    const img = await faceapi.fetchImage(person.img);
-    const detection = await faceapi.detectSingleFace(img).withFaceLandmarks().withFaceDescriptor();
-    if (!detection) continue;
-    labeledDescriptors.push(new faceapi.LabeledFaceDescriptors(person.name, [detection.descriptor]));
-  }
-  labeledFaceDescriptors = labeledDescriptors;
-  faceMatcher = new faceapi.FaceMatcher(labeledFaceDescriptors, 0.6);
-  console.log("Dataset siap.");
-}
-
+// ========= Start Camera =========
 async function startVideo() {
   const stream = await navigator.mediaDevices.getUserMedia({ video: {} });
   video.srcObject = stream;
@@ -80,7 +98,7 @@ video.addEventListener("play", () => {
     const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptors();
     const resizedDetections = faceapi.resizeResults(detections, displaySize);
     context.clearRect(0, 0, canvas.width, canvas.height);
-    if (detections.length > 0) {
+    if (detections.length > 0 && faceMatcher) {
       const results = resizedDetections.map(d => faceMatcher.findBestMatch(d.descriptor));
       results.forEach((result, i) => {
         const box = resizedDetections[i].detection.box;
@@ -91,12 +109,11 @@ video.addEventListener("play", () => {
   }, 500);
 });
 
+// ========= Absensi =========
 document.getElementById("ambilAbsensi").addEventListener("click", async () => {
+  if (!faceMatcher) { alert("Dataset kosong, tambahkan peserta dulu!"); return; }
   const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptors();
-  if (detections.length === 0) {
-    alert("❌ Tidak ada wajah terdeteksi!");
-    return;
-  }
+  if (detections.length === 0) { alert("❌ Tidak ada wajah terdeteksi!"); return; }
   const results = detections.map(d => faceMatcher.findBestMatch(d.descriptor));
   results.forEach(r => {
     const nama = r.label !== "unknown" ? r.label : "Tidak dikenal";
@@ -108,6 +125,7 @@ document.getElementById("ambilAbsensi").addEventListener("click", async () => {
   });
 });
 
+// ========= Download CSV =========
 document.getElementById("downloadCSV").addEventListener("click", () => {
   let csv = "Waktu,Nama,Confidence\n";
   absensiData.forEach(r => {
@@ -121,9 +139,43 @@ document.getElementById("downloadCSV").addEventListener("click", () => {
   a.click();
 });
 
+// ========= Tambah Dataset =========
+document.getElementById("tambahDataset").addEventListener("click", async () => {
+  const nama = document.getElementById("namaBaru").value.trim();
+  const fileInput = document.getElementById("fotoBaru");
+  if (!nama || fileInput.files.length === 0) {
+    alert("Isi nama dan pilih foto dulu!");
+    return;
+  }
+  const file = fileInput.files[0];
+  const img = await faceapi.bufferToImage(file);
+  const detection = await faceapi.detectSingleFace(img).withFaceLandmarks().withFaceDescriptor();
+  if (!detection) {
+    alert("❌ Wajah tidak terdeteksi di foto!");
+    return;
+  }
+  labeledFaceDescriptors.push(new faceapi.LabeledFaceDescriptors(nama, [detection.descriptor]));
+  faceMatcher = new faceapi.FaceMatcher(labeledFaceDescriptors, 0.6);
+  saveDataset();
+  document.getElementById("datasetList").innerHTML += `<p>✔️ ${nama} ditambahkan ke dataset</p>`;
+  document.getElementById("namaBaru").value = "";
+  document.getElementById("fotoBaru").value = "";
+});
+
+// ========= Reset Dataset =========
+document.getElementById("resetDataset").addEventListener("click", () => {
+  if (confirm("Yakin mau hapus semua dataset dari browser?")) {
+    localStorage.removeItem("faceDataset");
+    labeledFaceDescriptors = [];
+    faceMatcher = null;
+    document.getElementById("datasetList").innerHTML = "<i>Dataset kosong</i>";
+  }
+});
+
+// ========= Init =========
 (async () => {
   await loadModels();
-  await loadDataset();
+  loadDatasetFromStorage();
   await startVideo();
 })();
 </script>
